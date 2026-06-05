@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f0f13"/>
+      <stop offset="100%" stop-color="#1a1a24"/>
+    </linearGradient>
+    <linearGradient id="bar1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#a8ff3e"/>
+      <stop offset="100%" stop-color="#6fcf00"/>
+    </linearGradient>
+    <linearGradient id="bar2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#a8ff3e"/>
+      <stop offset="100%" stop-color="#6fcf00"/>
+    </linearGradient>
+    <linearGradient id="bar3" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#a8ff3e"/>
+      <stop offset="100%" stop-color="#6fcf00"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softglow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background rounded rect -->
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+
+  <!-- Subtle grid lines -->
+  <g opacity="0.06" stroke="#a8ff3e" stroke-width="1">
+    <line x1="0" y1="170" x2="512" y2="170"/>
+    <line x1="0" y1="256" x2="512" y2="256"/>
+    <line x1="0" y1="342" x2="512" y2="342"/>
+    <line x1="170" y1="0" x2="170" y2="512"/>
+    <line x1="256" y1="0" x2="256" y2="512"/>
+    <line x1="342" y1="0" x2="342" y2="512"/>
+  </g>
+
+  <!-- Bar chart bars — rising from left to right -->
+  <!-- Bar 1 -->
+  <rect x="88" y="320" width="52" height="112" rx="8" fill="url(#bar1)" opacity="0.5" filter="url(#softglow)"/>
+  <!-- Bar 2 -->
+  <rect x="164" y="255" width="52" height="177" rx="8" fill="url(#bar2)" opacity="0.65" filter="url(#softglow)"/>
+  <!-- Bar 3 -->
+  <rect x="240" y="188" width="52" height="244" rx="8" fill="url(#bar3)" opacity="0.8" filter="url(#softglow)"/>
+  <!-- Bar 4 (tallest, full glow) -->
+  <rect x="316" y="126" width="52" height="306" rx="8" fill="url(#bar1)" filter="url(#glow)"/>
+  <!-- Bar 5 accent -->
+  <rect x="392" y="80" width="32" height="352" rx="8" fill="#a8ff3e" opacity="0.3"/>
+
+  <!-- Trend line over bars -->
+  <polyline
+    points="114,310 190,245 266,178 342,118"
+    fill="none"
+    stroke="#a8ff3e"
+    stroke-width="6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#glow)"
+  />
+
+  <!-- Dots on trend line -->
+  <circle cx="114" cy="310" r="7" fill="#a8ff3e" filter="url(#glow)"/>
+  <circle cx="190" cy="245" r="7" fill="#a8ff3e" filter="url(#glow)"/>
+  <circle cx="266" cy="178" r="7" fill="#a8ff3e" filter="url(#glow)"/>
+  <circle cx="342" cy="118" r="10" fill="#a8ff3e" filter="url(#glow)"/>
+
+  <!-- "IRON" text -->
+  <text x="256" y="490" font-family="Georgia, serif" font-size="38" font-weight="700"
+    fill="#a8ff3e" text-anchor="middle" letter-spacing="12" opacity="0.9"
+    filter="url(#softglow)">IRONLOG</text>
+</svg>
