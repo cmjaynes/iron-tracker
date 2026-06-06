@@ -350,6 +350,73 @@ function Icon({name, size=20, color="currentColor", style={}}) {
   }
 }
 
+// ── AddExToPlan: add a new exercise to an edited plan ────────────────────────
+function AddExToPlan({planTargets, allExercises, editingPlan, setEditingPlan}) {
+  const [addEx, setAddEx] = useState(EXERCISES[0]);
+
+  function addExercise(exName, bp) {
+    const newEx = {name:exName, sets:3, reps:"8-12", tier:"secondary", bodyPart:bp, last:null, suggested:null};
+    const existing = editingPlan.find(s => s.bodyPart === bp);
+    const np = existing
+      ? editingPlan.map(s => s.bodyPart !== bp ? s : {...s, exercises:[...s.exercises, newEx]})
+      : [...editingPlan, {bodyPart:bp, exercises:[newEx]}];
+    setEditingPlan(np);
+  }
+
+  // Pick a random exercise from a body part that isn't already in the plan
+  function quickAdd(bp) {
+    const pool = PLANNER_EXERCISES[bp] || [];
+    const inPlan = editingPlan.flatMap(s => s.exercises.map(e => e.name));
+    const available = pool.filter(e => !inPlan.includes(e.name));
+    const pick = available.length > 0
+      ? available[Math.floor(Math.random() * available.length)]
+      : pool[Math.floor(Math.random() * pool.length)];
+    if (pick) addExercise(pick.name, bp);
+  }
+
+  return (
+    <div style={{background:S3, border:"1px dashed "+BD2, borderRadius:10, padding:"12px", marginBottom:12}}>
+      <div style={{fontFamily:FF_HEAD, fontWeight:700, fontSize:11, color:T2, marginBottom:10, textTransform:"uppercase"}}>Add Exercise</div>
+
+      {/* Quick-add body part pills */}
+      <div style={{fontFamily:FF_BODY, fontSize:11, color:T3, marginBottom:6}}>Quick add by body part</div>
+      <div style={{display:"flex", gap:6, flexWrap:"wrap", marginBottom:14}}>
+        {BODY_PARTS.map(bp => (
+          <button key={bp} onClick={() => quickAdd(bp)} style={{
+            fontFamily:FF_BODY, fontSize:11, fontWeight:500,
+            background:S2, color:T2,
+            border:"1px solid "+BD2,
+            borderRadius:8, padding:"5px 10px", cursor:"pointer",
+            transition:"all 0.15s"
+          }}
+          onMouseEnter={e=>{e.currentTarget.style.background=A2+"22";e.currentTarget.style.color=A2;e.currentTarget.style.borderColor=A2;}}
+          onMouseLeave={e=>{e.currentTarget.style.background=S2;e.currentTarget.style.color=T2;e.currentTarget.style.borderColor=BD2;}}
+          >{bp}</button>
+        ))}
+      </div>
+
+      {/* Or pick a specific exercise */}
+      <div style={{fontFamily:FF_BODY, fontSize:11, color:T3, marginBottom:6}}>Or pick a specific exercise</div>
+      <div style={{display:"flex", gap:8}}>
+        <div style={{flex:1}}>
+          <ExercisePicker value={addEx} onChange={setAddEx} extraOptions={allExercises} />
+        </div>
+        <button onClick={() => addExercise(addEx, editingPlan[0]?.bodyPart || BODY_PARTS[0])} style={{
+          background:A2, color:"#060608", border:"none", borderRadius:8,
+          padding:"0 14px", fontSize:12, fontWeight:700,
+          fontFamily:FF_HEAD, cursor:"pointer", flexShrink:0,
+          display:"flex", alignItems:"center", gap:5
+        }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          Add
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── ExercisePicker: searchable grouped dropdown ───────────────────────────────
 function ExercisePicker({value, onChange, extraOptions=[], style={}}) {
   const [search, setSearch] = useState("");
@@ -585,7 +652,7 @@ export default function App() {
   }
 
   // ── Rest Timer ──
-  function startRestTimer(secs = 90) {
+  function startRestTimer(secs = 60) {
     if (restInterval) clearInterval(restInterval);
     setRestTimer({secs, total: secs, running: true});
     const iv = setInterval(() => {
@@ -679,7 +746,7 @@ export default function App() {
     persistLogs(nl);
     setAlerts(computeAlerts(nl));
     if (isPR) { setPrFlash(ex); setTimeout(()=>setPrFlash(null), 3000); }
-    startRestTimer(90);
+    startRestTimer(60);
     setFreeSets([{weight:"",reps:""}]); setFreeCustom("");
     setFlash("free"); setTimeout(()=>setFlash(""),1400);
   }
@@ -948,13 +1015,15 @@ export default function App() {
   }
 
   // Duration → exercise budget
-  // ~10-12 min per exercise (warm-up sets + working sets + rest)
+  // ~5-6 min per exercise (2-3 working sets + 60-90s rest each)
+  // minus ~5 min warmup/transition overhead
   function exBudget(minutes) {
-    if (minutes <= 30) return 3;
-    if (minutes <= 45) return 4;
-    if (minutes <= 60) return 6;
-    if (minutes <= 75) return 8;
-    return 10;
+    if (minutes <= 15) return 2;
+    if (minutes <= 30) return 4;
+    if (minutes <= 45) return 6;
+    if (minutes <= 60) return 8;
+    if (minutes <= 75) return 10;
+    return 12;
   }
 
   function generatePlan(targets, durationMins) {
@@ -1076,7 +1145,7 @@ export default function App() {
             {restTimer.secs===0?"Done":Math.floor(restTimer.secs/60)+":"+(restTimer.secs%60).toString().padStart(2,"0")}
           </div>
           <div style={{display:"flex",gap:6}}>
-            {[60,90,120,180].map(s=>(
+            {[30,45,60].map(s=>(
               <button key={s} onClick={()=>startRestTimer(s)} style={{...ghostBtn(T3),padding:"3px 7px",fontSize:10,borderRadius:6}}>{s}s</button>
             ))}
             <button onClick={stopRestTimer} style={{...ghostBtn("#ef4444"),padding:"3px 8px",fontSize:11,borderRadius:6,display:"flex",alignItems:"center"}}><Icon name="close" size={11} color="#ef4444" /></button>
@@ -1561,7 +1630,7 @@ export default function App() {
                 <div style={{marginBottom:20}}>
                   <div style={{fontFamily:FF_HEAD,fontWeight:700,fontSize:13,color:TXT,marginBottom:10}}>How long do you have?</div>
                   <div style={{display:"flex",gap:6,marginBottom:8}}>
-                    {[30,45,60,75,90].map(mins=>(
+                    {[15,30,45,60,75,90].map(mins=>(
                       <button key={mins} onClick={()=>{setPlanDuration(mins);setPlanResult(null);setEditingPlan(null);}} style={{
                         flex:1,fontFamily:FF_HEAD,fontWeight:700,fontSize:12,
                         background:planDuration===mins?A:S3,
@@ -1647,6 +1716,13 @@ export default function App() {
                           ))}
                         </div>
                       ))}
+                      {/* Add new exercise to plan */}
+                      <AddExToPlan
+                        planTargets={planTargets}
+                        allExercises={allExercises}
+                        editingPlan={editingPlan}
+                        setEditingPlan={setEditingPlan}
+                      />
                       <div style={{display:"flex",gap:8,marginTop:8}}>
                         <button onClick={()=>setEditingPlan(null)} style={{...ghostBtn(T2),flex:1,borderRadius:10}}>Cancel</button>
                         <button onClick={()=>{setPlanResult(editingPlan);setEditingPlan(null);}} style={{...btn(A,BG),flex:2,borderRadius:10,padding:"10px"}}>Save Changes</button>
@@ -2335,7 +2411,7 @@ export default function App() {
             <div style={{marginBottom:20}}>
               <label style={{display:"block",fontFamily:FF_BODY,fontSize:12,color:T2,marginBottom:8}}>How long do you want to work out?</label>
               <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                {[30,45,60,75,90].map(mins=>(
+                {[15,30,45,60,75,90].map(mins=>(
                   <button key={mins} onClick={()=>setTplDuration(mins)} style={{
                     flex:1,background:tplDuration===mins?A:S3,
                     border:"1px solid "+(tplDuration===mins?A:BD2),
@@ -2346,7 +2422,7 @@ export default function App() {
                 ))}
               </div>
               <div style={{fontFamily:FF_BODY,fontSize:11,color:T3,marginTop:8}}>
-                {tplDuration<=30?"3–4 exercises recommended":tplDuration<=45?"4–5 exercises":tplDuration<=60?"5–6 exercises":tplDuration<=75?"6–7 exercises":"7–9 exercises"}
+                {tplDuration<=15?"2 exercises (express)":tplDuration<=30?"4 exercises":tplDuration<=45?"6 exercises":tplDuration<=60?"8 exercises":tplDuration<=75?"10 exercises":"12 exercises"}
               </div>
             </div>
             <div style={{fontFamily:FF_HEAD,fontWeight:700,fontSize:13,color:TXT,marginBottom:12}}>Exercises</div>
@@ -2467,8 +2543,8 @@ export default function App() {
             // Carry weight forward to next set, clear reps
             setWorkoutReps("");
             // Keep weight filled for next set (common gym behavior)
-            startRestTimer(90);
-            setWorkoutRestTime(prev => prev + 90);
+            startRestTimer(60);
+            setWorkoutRestTime(prev => prev + 60);
           }
 
           function nextExercise() {
@@ -2581,7 +2657,18 @@ export default function App() {
                   </button>
                 </div>
               )}
-              <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:10}}>
+              <div style={{display:"grid",gridTemplateColumns:"auto 1fr 2fr",gap:8}}>
+                <button
+                  onClick={()=>{ if(workoutExIdx>0){ setWorkoutExIdx(i=>i-1); setWorkoutWeight(""); setWorkoutReps(""); stopRestTimer(); } }}
+                  disabled={workoutExIdx===0}
+                  style={{
+                    ...ghostBtn(workoutExIdx===0?T3:T2),
+                    padding:"13px 14px",borderRadius:12,
+                    opacity:workoutExIdx===0?0.3:1,
+                    display:"flex",alignItems:"center",gap:4
+                  }}>
+                  <Icon name="chevron-right" size={16} color={workoutExIdx===0?T3:T2} style={{transform:"rotate(180deg)"}} />
+                </button>
                 <button onClick={()=>{setView("log");setLogMode("free");setActiveTemplate(null);stopRestTimer();}} style={{...ghostBtn(T2),padding:"13px",borderRadius:12,fontSize:13,textAlign:"center"}}>
                   Quit
                 </button>
